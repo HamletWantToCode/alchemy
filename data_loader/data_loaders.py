@@ -2,10 +2,7 @@ from base import BaseDataLoader
 from Alchemy_dataset import TencentAlchemyDataset
 
 
-class MnistDataLoader(BaseDataLoader):
-    """
-    MNIST data loading demo using BaseDataLoader
-    """
+class AlchemyDataLoader(BaseDataLoader):
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0, num_workers=1, training=True):
         self.data_dir = data_dir
         self.dataset = TencentAlchemyDataset(data_dir, training)
