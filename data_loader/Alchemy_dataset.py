@@ -9,6 +9,14 @@ import networkx as nx
 import pathlib
 import pandas as pd
 
+
+_urls = {
+        'dev': 'https://alchemy.tencent.com/data/dev.zip',
+        'valid': 'https://alchemy.tencent.com/data/valid.zip',
+        'test': 'https://alchemy.tencent.com/data/test.zip',
+        }
+
+
 class TencentAlchemyDataset(InMemoryDataset):
     fdef_name = osp.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
     chem_feature_factory = ChemicalFeatures.BuildFeatureFactory(fdef_name)
