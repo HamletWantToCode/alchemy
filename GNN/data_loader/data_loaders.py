@@ -1,4 +1,4 @@
-from base import BaseDataLoader
+from ..base import BaseDataLoader
 from .Alchemy_dataset import TencentAlchemyDataset
 
 
