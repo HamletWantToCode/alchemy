@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 from torchvision.utils import make_grid
-from base import BaseTrainer
-from utils import inf_loop
+from ..base import BaseTrainer
+from ..utils import inf_loop
 
 
 class Trainer(BaseTrainer):
@@ -56,8 +56,8 @@ class Trainer(BaseTrainer):
 
         total_loss = 0
         total_metrics = np.zeros(len(self.metrics))
-        for batch_idx, (data, target) in enumerate(self.data_loader):
-            data, target = data.to(self.device), target.to(self.device)
+        for batch_idx, data in enumerate(self.data_loader):
+            data, target = data.to(self.device), data.y.to(self.device)
 
             self.optimizer.zero_grad()
             output = self.model(data)
@@ -107,8 +107,8 @@ class Trainer(BaseTrainer):
         total_val_loss = 0
         total_val_metrics = np.zeros(len(self.metrics))
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
-                data, target = data.to(self.device), target.to(self.device)
+            for batch_idx, data in enumerate(self.valid_data_loader):
+                data, target = data.to(self.device), data.y.to(self.device)
 
                 output = self.model(data)
                 loss = self.loss(output, target)

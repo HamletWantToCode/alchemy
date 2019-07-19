@@ -1,19 +1,20 @@
 {
-    "name": "Mnist_LeNet",
-    "n_gpu": 1,
+    "name": "AGCN_net",
+    "n_gpu": 0,
 
     "arch": {
-        "type": "MnistModel",
+        "type": "AGCN",
         "args": {}
     },
     "data_loader": {
-        "type": "MnistDataLoader",
+        "type": "AlchemyDataLoader",
         "args":{
-            "data_dir": "data/",
-            "batch_size": 128,
+            "data_dir": "/Users/hongbinren/Documents/Data/my/alchemy/sample",
+            "batch_size": 10,
             "shuffle": true,
             "validation_split": 0.1,
-            "num_workers": 2
+            "num_workers": 2,
+            "training": true
         }
     },
     "optimizer": {
@@ -24,10 +25,8 @@
             "amsgrad": true
         }
     },
-    "loss": "nll_loss",
-    "metrics": [
-        "my_metric", "my_metric2"
-    ],
+    "loss": "mse_loss",
+    "metrics": ["mse_metric"],
     "lr_scheduler": {
         "type": "StepLR",
         "args": {

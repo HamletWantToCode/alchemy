@@ -1,12 +1,12 @@
 import argparse
 import collections
 import torch
-import data_loader.data_loaders as module_data
-import model.loss as module_loss
-import model.metric as module_metric
-import model.model as module_arch
+import GNN.data_loader as module_data
+import GNN.model.loss as module_loss
+import GNN.model.metric as module_metric
+import GNN.model as module_arch
 from parse_config import ConfigParser
-from trainer import Trainer
+from GNN.trainer import Trainer
 
 
 def main(config):
@@ -14,6 +14,8 @@ def main(config):
 
     # setup data_loader instances
     data_loader = config.initialize('data_loader', module_data)
+    # for batch_idx, data in enumerate(data_loader):
+    #     print(batch_idx, data)
     valid_data_loader = data_loader.split_validation()
 
     # build model architecture, then print to console

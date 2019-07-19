@@ -4,8 +4,8 @@ from pathlib import Path
 from functools import reduce
 from operator import getitem
 from datetime import datetime
-from logger import setup_logging
-from utils import read_json, write_json
+from GNN.logger import setup_logging
+from GNN.utils import read_json, write_json
 
 
 class ConfigParser:
