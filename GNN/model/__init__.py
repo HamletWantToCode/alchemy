@@ -1,1 +1,2 @@
-from .model import AGCN
+from .AGCN import AGCN
+from .MPNN import MPNN

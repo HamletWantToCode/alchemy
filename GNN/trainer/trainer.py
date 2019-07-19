@@ -64,7 +64,8 @@ class Trainer(BaseTrainer):
             self.optimizer.zero_grad()
             output = self.model(data)
             loss = self.loss(output, target)
-            loss.backward(retain_graph=True)
+            # loss.backward(retain_graph=True)
+            loss.backward()
             self.optimizer.step()
 
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)

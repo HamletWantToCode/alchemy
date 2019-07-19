@@ -1,5 +1,6 @@
 from ..base import BaseDataLoader
 from .Alchemy_dataset import TencentAlchemyDataset
+from .transform import T, Complete
 
 
 class AlchemyDataLoader(BaseDataLoader):
@@ -9,5 +10,6 @@ class AlchemyDataLoader(BaseDataLoader):
             mode = 'dev'
         else:
             mode = 'valid'
-        self.dataset = TencentAlchemyDataset(data_dir, mode)
+        transform = T.Compose([Complete(), T.Distance(norm=False)])
+        self.dataset = TencentAlchemyDataset(data_dir, mode, transform=transform)
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)

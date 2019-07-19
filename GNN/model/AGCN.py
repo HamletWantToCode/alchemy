@@ -1,5 +1,7 @@
 import torch
-from ..nn import SGC_LL, graph_max_pool
+# from ..nn import SGC_LL, graph_max_pool
+from ..nn import graph_max_pool
+from torch_geometric.nn import ChebConv
 from torch_geometric.nn import global_add_pool
 from torch.nn import BatchNorm1d
 import torch.nn.functional as F
@@ -18,7 +20,8 @@ class AGCN(torch.nn.Module):
         super(AGCN, self).__init__()
 
         self.num_step_combo = num_step_combo
-        self.conv = SGC_LL(node_input_dim, node_hidden_dim, K, alpha)
+        self.conv = ChebConv(node_input_dim, node_hidden_dim, K)
+        # self.conv = SGC_LL(node_input_dim, node_hidden_dim, K, alpha)
         self.batch_norm = BatchNorm1d(node_hidden_dim)
 
         self.lin1 = torch.nn.Linear(node_hidden_dim, fcc_hidden_dim)
@@ -39,8 +42,3 @@ class AGCN(torch.nn.Module):
         out = F.relu(self.lin1(out))
         out = self.lin2(out)
         return out
-
-
-
-
-
