@@ -14,8 +14,6 @@ def main(config):
 
     # setup data_loader instances
     data_loader = config.initialize('data_loader', module_data)
-    # for batch_idx, data in enumerate(data_loader):
-    #     print(batch_idx, data)
     valid_data_loader = data_loader.split_validation()
 
     # build model architecture, then print to console

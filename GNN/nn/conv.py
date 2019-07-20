@@ -3,7 +3,7 @@ import torch
 from torch.nn import Parameter
 from torch_scatter import scatter_add
 from torch_geometric.nn.conv import MessagePassing
-from torch_geometric.utils import add_remaining_self_loops, remove_self_loops
+from torch_geometric.utils import add_remaining_self_loops
 from torch_geometric.nn.inits import uniform
 
 
@@ -29,7 +29,6 @@ class SGC_LL(MessagePassing, BaseModel):
             self.register_parameter('bias', None)
 
         self.reset_parameters()
-        self.M_weight = self.W_weight.mm(torch.transpose(self.W_weight, 1, 0))
 
     def reset_parameters(self):
         size = self.in_channels * self.weight.size(0)
@@ -39,68 +38,60 @@ class SGC_LL(MessagePassing, BaseModel):
         uniform(size, self.root)
 
     @staticmethod
-    def norm(edge_index, num_nodes, dtype=None):
-        edge_weight = torch.ones((edge_index.size(1), ),
+    def residue_norm(x, edge_index, num_nodes, W, alpha, dtype=None):
+        row, col = edge_index
+
+        # compute graph Laplacian
+        edge_weight_L = torch.ones((edge_index.size(1), ),
                                   dtype=dtype,
                                   device=edge_index.device)
 
-        edge_index_, edge_weight_ = add_remaining_self_loops(
-            edge_index, edge_weight, fill_value=0
+        edge_index_L, edge_weight_L = add_remaining_self_loops(
+            edge_index, edge_weight_L, fill_value=0
         )
+        row_L, col_L = edge_index_L
 
-        # compute graph Laplacian 
-        row, col = edge_index_
-        deg = scatter_add(edge_weight_, row, dim=0, dim_size=num_nodes)
+        deg = scatter_add(edge_weight_L, row_L, dim=0, dim_size=num_nodes)
         deg_inv_sqrt = deg.pow(-0.5)
         deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
 
-        L = -deg_inv_sqrt[row] * edge_weight_ * deg_inv_sqrt[col]
+        L = -deg_inv_sqrt[row_L] * edge_weight_L * deg_inv_sqrt[col_L]
         L[L==0] = 1
 
-        return edge_index_, L
-    
-    @staticmethod
-    def residue_norm(x, M_weight, alpha, num_nodes, dtype=None):
-        I = torch.arange(num_nodes)
-        ii, jj = torch.meshgrid(I, I)
-        edge_index = torch.stack([ii.flatten(), jj.flatten()])
+        # compute residue Laplacian
+        tmp_row = torch.index_select(x, 0, row)
+        tmp_col = torch.index_select(x, 0, col)
+        diff = (tmp_row - tmp_col)
+        diff_T = torch.transpose(diff, 1, 0)
+        M = W.mm(torch.transpose(W, 1, 0))
+        D2 = torch.einsum('ij,jk,ki->i', diff, M, diff_T)
+        edge_weight_residue = torch.exp(-D2/2.0)
 
-        edge_index, _ = remove_self_loops(edge_index)
+        _, edge_weight_residue = add_remaining_self_loops(
+            edge_index, edge_weight_residue, fill_value=0
+        )
 
-        row, col = edge_index
-        edge_weight = torch.zeros(edge_index.size(1))
-        for i in range(edge_index.size(1)):
-            dxij = x[row[i]] - x[col[i]]
-            d = torch.sqrt(dxij.view(1, -1).mm(M_weight.mm(dxij.view(-1, 1))))[0, 0]
-            edge_weight[i] = torch.exp(-d/2.0)
+        deg_Gauss = scatter_add(edge_weight_residue, row_L, dim=0, dim_size=num_nodes)
+        deg_inv_sqrt_Gauss = deg.pow(-0.5)
+        deg_inv_sqrt_Gauss[deg_inv_sqrt_Gauss == float('inf')] = 0
 
-        edge_index_, edge_weight_ = add_remaining_self_loops(edge_index, edge_weight, fill_value=0)
+        L_residue = -deg_inv_sqrt_Gauss[row_L] * edge_weight_residue * deg_inv_sqrt_Gauss[col_L]
+        L_residue[L_residue==0] = 1
 
-        row_, col_ = edge_index_
-        deg = scatter_add(edge_weight_, row_, dim=0, dim_size=num_nodes)
-        deg_inv_sqrt = deg.pow(-0.5)
-        deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
-
-        Lres = -deg_inv_sqrt[row_] * edge_weight_ * deg_inv_sqrt[col_]
-        Lres[Lres==0] = 1
-
-        return edge_index_, alpha*Lres
-
+        return edge_index_L, L + alpha*L_residue
 
     def forward(self, x, edge_index):
-        edge_index1, norm1 = self.norm(edge_index, x.size(0), x.dtype)
-        edge_index2, norm2 = self.residue_norm(x, self.M_weight, self.alpha, x.size(0), x.dtype)
+        edge_index, norm = self.residue_norm(x, edge_index, x.size(0), self.W_weight, self.alpha, x.dtype)
 
         Tx_0 = x
         out = torch.matmul(Tx_0, self.weight[0])
 
         if self.weight.size(0) > 1:
-            Tx_1 = self.propagate(edge_index1, x=x, norm=norm1) + self.propagate(edge_index2, x=x, norm=norm2)
+            Tx_1 = self.propagate(edge_index, x=x, norm=norm)
             out = out + torch.matmul(Tx_1, self.weight[1])
 
         for k in range(2, self.weight.size(0)):
-            Tx_2 = 2 * (self.propagate(edge_index1, x=Tx_1, norm=norm1)\
-                        + self.propagate(edge_index2, x=Tx_1, norm=norm2)) - Tx_0
+            Tx_2 = 2 * self.propagate(edge_index, x=Tx_1, norm=norm) - Tx_0
             out = out + torch.matmul(Tx_2, self.weight[k])
             Tx_0, Tx_1 = Tx_1, Tx_2
 

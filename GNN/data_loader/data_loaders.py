@@ -10,6 +10,7 @@ class AlchemyDataLoader(BaseDataLoader):
             mode = 'dev'
         else:
             mode = 'valid'
-        transform = T.Compose([Complete(), T.Distance(norm=False)])
+        transform = None
+        # transform = T.Compose([Complete(), T.Distance(norm=False)])
         self.dataset = TencentAlchemyDataset(data_dir, mode, transform=transform)
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)

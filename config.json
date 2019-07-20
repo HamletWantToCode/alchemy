@@ -35,7 +35,7 @@
         }
     },
     "trainer": {
-        "epochs": 100,
+        "epochs": 1,
 
         "num_tasks": 12,
 
