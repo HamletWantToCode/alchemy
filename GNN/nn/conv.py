@@ -6,6 +6,8 @@ from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.utils import add_remaining_self_loops
 from torch_geometric.nn.inits import uniform
 
+# import torchsnooper
+
 
 class SGC_LL(MessagePassing, BaseModel):
     def __init__(self, in_channels, out_channels, K, alpha, root_weight=True, bias=True, **kwargs):
@@ -80,6 +82,7 @@ class SGC_LL(MessagePassing, BaseModel):
 
         return edge_index_L, L + alpha*L_residue
 
+    # @torchsnooper.snoop()
     def forward(self, x, edge_index):
         edge_index, norm = self.residue_norm(x, edge_index, x.size(0), self.W_weight, self.alpha, x.dtype)
 
