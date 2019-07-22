@@ -107,6 +107,7 @@ saved/
 datasets/
 config.json
 targets.csv
+bin/
 
 # editor, os cache directory
 .vscode/

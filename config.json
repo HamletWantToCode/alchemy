@@ -1,6 +1,6 @@
 {
     "name": "AGCN_net",
-    "n_gpu": 0,
+    "n_gpu": 2,
 
     "arch": {
         "type": "AGCN",
@@ -9,11 +9,11 @@
     "data_loader": {
         "type": "AlchemyDataLoader",
         "args":{
-            "data_dir": "/Users/hongbinren/Documents/Data/my/alchemy/sample",
-            "batch_size": 20,
+            "data_dir": "/home/renhb/Data/Alchemy",
+            "batch_size": 1000,
             "shuffle": true,
-            "validation_split": 0.2,
-            "num_workers": 2,
+            "validation_split": 0.4,
+            "num_workers": 5,
             "training": true
         }
     },
