@@ -1,11 +1,10 @@
 import argparse
 import torch
 from tqdm import tqdm
-import data_loader.data_loaders as module_data
-import model.loss as module_loss
-import model.metric as module_metric
-import model.model as module_arch
+import GNN.data_loader as module_data
+import GNN.model as module_arch
 from parse_config import ConfigParser
+import pandas as pd 
 
 
 def main(config):
@@ -26,9 +25,6 @@ def main(config):
     logger.info(model)
 
     # get function handles of loss and metrics
-    loss_fn = getattr(module_loss, config['loss'])
-    metric_fns = [getattr(module_metric, met) for met in config['metrics']]
-
     logger.info('Loading checkpoint: {} ...'.format(config.resume))
     checkpoint = torch.load(config.resume)
     state_dict = checkpoint['state_dict']
@@ -41,35 +37,22 @@ def main(config):
     model = model.to(device)
     model.eval()
 
-    total_loss = 0.0
-    total_metrics = torch.zeros(len(metric_fns))
-
+    targets = dict()
     with torch.no_grad():
-        for i, (data, target) in enumerate(tqdm(data_loader)):
-            data, target = data.to(device), target.to(device)
+        for i, data in enumerate(tqdm(data_loader)):
+            data = data.to(device)
             output = model(data)
+            for i in range(len(data.y)):
+                targets[data.y[i].item()] = output[i].tolist()
 
-            #
-            # save sample images, or do something with output here
-            #
-
-            # computing loss, metrics on test set
-            loss = loss_fn(output, target)
-            batch_size = data.shape[0]
-            total_loss += loss.item() * batch_size
-            for i, metric in enumerate(metric_fns):
-                total_metrics[i] += metric(output, target) * batch_size
-
-    n_samples = len(data_loader.sampler)
-    log = {'loss': total_loss / n_samples}
-    log.update({
-        met.__name__: total_metrics[i].item() / n_samples for i, met in enumerate(metric_fns)
-    })
-    logger.info(log)
+    df_targets = pd.DataFrame.from_dict(targets, orient="index")
+    df_targets.columns = ['property_%d' % x for x in range(12)]
+    df_targets.sort_index(inplace=True)
+    df_targets.to_csv('targets.csv', index_label='gdb_idx')
 
 
 if __name__ == '__main__':
-    args = argparse.ArgumentParser(description='PyTorch Template')
+    args = argparse.ArgumentParser(description='alchemy_project')
 
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
