@@ -4,6 +4,8 @@ from torchvision.utils import make_grid
 from ..base import BaseTrainer
 from ..utils import inf_loop
 
+# import torchsnooper
+
 class Trainer(BaseTrainer):
     """
     Trainer class
@@ -37,6 +39,7 @@ class Trainer(BaseTrainer):
                 self.writer.add_scalar('{}-target.{}'.format(metric.__name__, j), multi_acc_metrics[i][j])
         return multi_acc_metrics
 
+#     @torchsnooper.snoop()
     def _train_epoch(self, epoch):
         """
         Training logic for an epoch
@@ -57,17 +60,17 @@ class Trainer(BaseTrainer):
         total_loss = 0
         total_metrics = np.zeros((len(self.metrics), self.num_tasks))
         for batch_idx, data in enumerate(self.data_loader):
-            data, target = data.to(self.device), data.y.to(self.device)
+            feature, target = data.to(self.device), data.y.to(self.device)
 
             self.optimizer.zero_grad()
-            output = self.model(data)
+            output = self.model(feature)
             loss = self.loss(output, target)
             loss.backward()
             self.optimizer.step()
 
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
             self.writer.add_scalar('loss', loss.item())
-            total_loss += loss.item()
+            total_loss += loss.item() 
             total_metrics += self._eval_metrics(output, target)
 
             if batch_idx % self.log_step == 0:
@@ -107,9 +110,9 @@ class Trainer(BaseTrainer):
         total_val_metrics = np.zeros((len(self.metrics), self.num_tasks))
         with torch.no_grad():
             for batch_idx, data in enumerate(self.valid_data_loader):
-                data, target = data.to(self.device), data.y.to(self.device)
+                feature, target = data.to(self.device), data.y.to(self.device)
 
-                output = self.model(data)
+                output = self.model(feature)
                 loss = self.loss(output, target)
 
                 self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
