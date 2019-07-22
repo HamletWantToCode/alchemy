@@ -43,9 +43,9 @@ class AGCN(torch.nn.Module):
             out = F.elu(out)
             out = graph_max_pool(out, edge_index)
 
-        out = (self.filter(out.unsqueeze(dim=1))).squeeze(dim=1)
         out = global_add_pool(out, batch)
-
+        out = (self.filter(out.unsqueeze(dim=1))).squeeze(dim=1)
+        
         out = F.relu(self.lin1(out))
         out = F.relu(self.lin2(out))
         out = self.output(out)
