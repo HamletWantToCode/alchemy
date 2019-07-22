@@ -4,9 +4,6 @@ from torchvision.utils import make_grid
 from ..base import BaseTrainer
 from ..utils import inf_loop
 
-
-import sys
-
 class Trainer(BaseTrainer):
     """
     Trainer class
@@ -57,7 +54,6 @@ class Trainer(BaseTrainer):
             The metrics in log must have the key 'metrics'.
         """
         self.model.train()
-
         total_loss = 0
         total_metrics = np.zeros((len(self.metrics), self.num_tasks))
         for batch_idx, data in enumerate(self.data_loader):
