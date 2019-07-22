@@ -45,6 +45,8 @@ class AGCN(torch.nn.Module):
 
         out = global_add_pool(out, batch)
         out = (self.filter(out.unsqueeze(dim=1))).squeeze(dim=1)
+        # out = 
+        # out = F.relu(out.squeeze(dim=1))
         
         out = F.relu(self.lin1(out))
         out = F.relu(self.lin2(out))
